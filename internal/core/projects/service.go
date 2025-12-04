@@ -33,15 +33,34 @@ type UpdateProjectInput struct {
 	Tags         []string
 }
 
-func ListProjects() {}
+func (s *Service) ListProjects() ([]ProjectModel, error) {
+	projects, err := s.Repo.GetAll()
+	if err != nil {
+		return nil, NewInternalError("Errore nel recupero dei progetti dal repository: " + err.Error())
+	}
+	return projects, nil
+}
 
-func GetProject(id string) {}
+func (s *Service) GetProject(id string) (ProjectModel, error) {
+	if id == "" {
+		return ProjectModel{}, NewValidationError(map[string]string{"id": "id del progetto è obbligatorio"})
+	}
 
-func CreateProject(input CreateProjectInput) {}
+	result, err := s.Repo.GetById(id)
+	if err != nil {
+		return ProjectModel{}, NewInternalError("Errore nella ricerca del project con id " + id + ": " + err.Error())
 
-func UpdateProject(id string, input UpdateProjectInput) {}
+	}
 
-func DeleteProject(id string) {}
+	return result, nil
+
+}
+
+func (s *Service) CreateProject(input CreateProjectInput) {}
+
+func (s *Service) UpdateProject(id string, input UpdateProjectInput) {}
+
+func (s *Service) DeleteProject(id string) {}
 
 func NewValidationError(details map[string]string) DomainError {
 	return DomainError{
@@ -76,4 +95,8 @@ func (r *ProjectRepository) CreatePjService() Service {
 	return Service{
 		Repo: r,
 	}
+}
+
+func (d DomainError) Error() string {
+	return d.Code + " Messaggio: " + d.Message
 }
