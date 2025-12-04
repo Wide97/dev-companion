@@ -1,5 +1,7 @@
 package projects
 
+import "strings"
+
 type DomainError struct {
 	Code    string
 	Message string
@@ -56,7 +58,78 @@ func (s *Service) GetProject(id string) (ProjectModel, error) {
 
 }
 
-func (s *Service) CreateProject(input CreateProjectInput) {}
+func (s *Service) CreateProject(input CreateProjectInput) (ProjectModel, error) {
+	normalized := input
+	normalized.Name = strings.TrimSpace(normalized.Name)
+	normalized.Path = strings.TrimSpace(normalized.Path)
+	normalized.Type = strings.TrimSpace(normalized.Type)
+	normalized.Type = strings.ToLower(normalized.Type)
+	normalized.BuildCommand = strings.TrimSpace(normalized.BuildCommand)
+	normalized.TestCommand = strings.TrimSpace(normalized.TestCommand)
+	if normalized.Tags == nil {
+		normalized.Tags = []string{}
+	}
+
+	var cleanTags []string
+	var seen map[string]bool = make(map[string]bool)
+	for _, val := range normalized.Tags {
+		trimmed := strings.TrimSpace(val)
+		minus := strings.ToLower(trimmed)
+		if minus == "" {
+			continue
+		}
+		if seen[minus] {
+			continue
+		}
+
+		cleanTags = append(cleanTags, minus)
+		seen[minus] = true
+	}
+
+	normalized.Tags = cleanTags
+
+	errors := make(map[string]string)
+	if normalized.Name == "" {
+		errors["name"] = "name è obbligatorio"
+	}
+	if normalized.Path == "" {
+		errors["path"] = "path è obbligatorio"
+	}
+
+	if normalized.Type == "" || (normalized.Type != "maven" && normalized.Type != "gradle" && normalized.Type != "node" && normalized.Type != "docker" && normalized.Type != "other") {
+		errors["type"] = "type deve essere uno tra: maven, gradle, node, docker, other"
+	}
+	if len(errors) > 0 {
+		return ProjectModel{}, NewValidationError(errors)
+	}
+
+	all, err := s.Repo.GetAll()
+	if err != nil {
+		return ProjectModel{}, NewInternalError("Errore nel recupero dei progetti dal repository: " + err.Error())
+	}
+	for _, p := range all {
+		if p.Path == normalized.Path {
+			return ProjectModel{}, NewConflictError("path", normalized.Path)
+		}
+	}
+
+	nor := ProjectModel{
+		Name:         normalized.Name,
+		Path:         normalized.Path,
+		Type:         normalized.Type,
+		BuildCommand: normalized.BuildCommand,
+		TestCommand:  normalized.TestCommand,
+		Tags:         normalized.Tags,
+	}
+
+	res, err := s.Repo.Create(nor)
+	if err != nil {
+		return ProjectModel{}, NewInternalError("Errore nella creazione del project: " + err.Error())
+	}
+
+	return res, nil
+
+}
 
 func (s *Service) UpdateProject(id string, input UpdateProjectInput) {}
 
