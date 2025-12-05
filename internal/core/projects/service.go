@@ -9,7 +9,7 @@ type DomainError struct {
 }
 
 type Service struct {
-	Repo *ProjectRepository
+	Repo PjRepository
 }
 
 const ERROR_VALIDATION = "VALIDATION"
@@ -255,9 +255,9 @@ func NewInternalError(message string) DomainError {
 	}
 }
 
-func (r *ProjectRepository) CreatePjService() Service {
+func CreatePjService(p PjRepository) Service {
 	return Service{
-		Repo: r,
+		Repo: p,
 	}
 }
 
