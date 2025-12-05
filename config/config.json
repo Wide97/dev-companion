@@ -1,7 +1,0 @@
-{
-  "listenAddress": "127.0.0.1",
-  "port": 8787,
-  "authToken": "METTI_QUI_UN_TOKEN_LUNGO_A_CASO",
-  "dataDir": "./data",
-  "logLevel": "INFO"
-}
