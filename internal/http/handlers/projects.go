@@ -116,10 +116,62 @@ func (h *ProjectsHandler) CreateProject(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ProjectsHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	var upd projects.UpdateProjectInput
+
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&upd)
+	if err != nil {
+		validationErr := projects.NewValidationError(map[string]string{
+			"body": "JSON malformato o mancante",
+		})
+		writeDomainError(w, validationErr)
+		return
+
+	}
+
+	updatePj, err1 := h.service.UpdateProject(id, upd)
+	if err1 != nil {
+		if domainErr, ok := err1.(*projects.DomainError); ok {
+			writeDomainError(w, *domainErr)
+			return
+		}
+
+		internalErr := projects.NewInternalError(
+			"errore interno durante UpdateProject: " + err1.Error(),
+		)
+
+		writeDomainError(w, internalErr)
+		return
+	}
+
+	writeJson(w, 200, updatePj)
 
 }
 
 func (h *ProjectsHandler) DeleteProject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	del := h.service.DeleteProject(id)
+	if del != nil {
+		if domainErr, ok := del.(*projects.DomainError); ok {
+			writeDomainError(w, *domainErr)
+			return
+		}
+
+		internalErr := projects.NewInternalError(
+			"errore interno durante DeleteProject: " + del.Error(),
+		)
+
+		writeDomainError(w, internalErr)
+		return
+
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 
 }
 
