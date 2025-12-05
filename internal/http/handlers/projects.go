@@ -46,14 +46,72 @@ func (h *ProjectsHandler) RegisterRoutes(router *mux.Router) {
 }
 
 func (h *ProjectsHandler) ListProjects(w http.ResponseWriter, r *http.Request) {
+	res, err := h.service.ListProjects()
+	if err != nil {
+		if domainErr, ok := err.(*projects.DomainError); ok {
+			writeDomainError(w, *domainErr)
+			return
+		}
 
+		internalErr := projects.NewInternalError(
+			"errore interno durante ListProjects: " + err.Error(),
+		)
+		writeDomainError(w, internalErr)
+		return
+	}
+
+	writeJson(w, http.StatusOK, res)
 }
 
 func (h *ProjectsHandler) GetProject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	project, err := h.service.GetProject(id)
+	if err != nil {
+		if domainErr, ok := err.(*projects.DomainError); ok {
+			writeDomainError(w, *domainErr)
+			return
+		}
+
+		internalErr := projects.NewInternalError(
+			"errore interno durante GetProject: " + err.Error(),
+		)
+		writeDomainError(w, internalErr)
+		return
+
+	}
+	writeJson(w, 200, project)
 
 }
 
 func (h *ProjectsHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
+	var input projects.CreateProjectInput
+
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&input)
+	if err != nil {
+		validationErr := projects.NewValidationError(map[string]string{
+			"body": "JSON malformato o mancante",
+		})
+		writeDomainError(w, validationErr)
+		return
+	}
+
+	createdProject, err := h.service.CreateProject(input)
+	if err != nil {
+		if domainErr, ok := err.(*projects.DomainError); ok {
+			writeDomainError(w, *domainErr)
+			return
+		}
+
+		internalErr := projects.NewInternalError(
+			"errore interno durante CreateProject: " + err.Error(),
+		)
+		writeDomainError(w, internalErr)
+		return
+	}
+
+	writeJson(w, http.StatusCreated, createdProject)
 
 }
 
