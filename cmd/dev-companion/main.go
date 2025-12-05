@@ -4,6 +4,7 @@ import (
 	"dev-companion/internal/config"
 	"dev-companion/internal/core/projects"
 	"dev-companion/internal/http/handlers"
+	"dev-companion/internal/http/middleware"
 	"fmt"
 	"net/http"
 	"os"
@@ -32,6 +33,10 @@ func main() {
 	pjHandler := handlers.NewProjectHandler(pjService)
 
 	router := mux.NewRouter()
+
+	authMw := middleware.NewAuthMiddleware(val.AuthToken)
+	router.Use(authMw)
+
 	pjHandler.RegisterRoutes(router)
 
 	str := val.ListenAddress + ":" + strconv.Itoa(val.Port)
