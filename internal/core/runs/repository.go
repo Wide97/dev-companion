@@ -65,34 +65,34 @@ func (r *RunRepository) GetAll() ([]RunModel, error) {
 func (r *RunRepository) GetById(id string) (RunModel, error) {
 	r.Mu.Lock()
 	defer r.Mu.Unlock()
-	for _, project := range r.Runs {
-		if project.Id == id {
-			return project, nil
+	for _, run := range r.Runs {
+		if run.Id == id {
+			return run, nil
 		}
 	}
 
-	return RunModel{}, fmt.Errorf("project with id %s not found", id)
+	return RunModel{}, fmt.Errorf("run with id %s not found", id)
 
 }
 
-func (r *RunRepository) Create(project RunModel) (RunModel, error) {
+func (r *RunRepository) Create(run RunModel) (RunModel, error) {
 	r.Mu.Lock()
 	defer r.Mu.Unlock()
 
 	tmp := time.Now().Format("20060102150405")
-	id := "pj_" + tmp + "dev_back"
-	project.Id = id
+	id := "run_" + tmp + "dev_back"
+	run.Id = id
+	run.Status = RunStatusPending
+	run.StartTime = time.Now()
+	run.EndTime = nil
 
-	project.StartTime = time.Now()
-	project.EndTime = time.Now()
-
-	r.Runs = append(r.Runs, project)
+	r.Runs = append(r.Runs, run)
 	err := r.saveToDisk()
 	if err != nil {
 		return RunModel{}, err
 	}
 
-	return project, nil
+	return run, nil
 
 }
 
