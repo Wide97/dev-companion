@@ -34,14 +34,14 @@ func main() {
 
 	router := mux.NewRouter()
 
+	recMw := middleware.NewRecoveryMiddleware()
+	router.Use(recMw)
+
 	loggingMw := middleware.NewLoggingMiddleware()
 	router.Use(loggingMw)
 
 	authMw := middleware.NewAuthMiddleware(val.AuthToken)
 	router.Use(authMw)
-
-	recMw := middleware.NewRecoveryMiddleware()
-	router.Use(recMw)
 
 	pjHandler.RegisterRoutes(router)
 
