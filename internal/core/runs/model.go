@@ -18,6 +18,6 @@ type RunModel struct {
 	Command   string     `json:"command"`
 	Status    string     `json:"status"`
 	StartTime time.Time  `json:"startTime"`
-	EndTime   *time.Time `json: "endTime, omitempty"`
+	EndTime   *time.Time `json: "endTime,omitempty"`
 	LogPath   string     `json:"logPath"`
 }
