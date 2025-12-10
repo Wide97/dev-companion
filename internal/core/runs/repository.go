@@ -14,6 +14,37 @@ type RunRepository struct {
 	Mu       sync.Mutex
 }
 
+func NewRunRepository(dataDir string) (*RunRepository, error) {
+
+	path := dataDir + "/runs.json"
+
+	file, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		fmt.Println("Nessun dato trovato")
+		err1 := os.WriteFile(path, []byte("[]"), 0644)
+		if err1 != nil {
+			return nil, err1
+		}
+	} else if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(file)
+
+	load, err2 := loadFromDisk(path)
+	if err2 != nil {
+		return nil, err2
+	}
+
+	fmt.Println("Dati caricati:", load)
+
+	return &RunRepository{
+		FilePath: path,
+		Runs:     load,
+		Mu:       sync.Mutex{},
+	}, nil
+}
+
 func loadFromDisk(path string) ([]RunModel, error) {
 	file, err := os.ReadFile(path)
 	if err != nil {
@@ -96,18 +127,18 @@ func (r *RunRepository) Create(run RunModel) (RunModel, error) {
 
 }
 
-func (r *RunRepository) Update(project RunModel) (RunModel, error) {
+func (r *RunRepository) Update(run RunModel) (RunModel, error) {
 	r.Mu.Lock()
 	defer r.Mu.Unlock()
 
-	if project.Id == "" {
-		return RunModel{}, fmt.Errorf("id project necessario per l'aggiornamento")
+	if run.Id == "" {
+		return RunModel{}, fmt.Errorf("id run necessario per l'aggiornamento")
 	}
 	foundIndex := -1
 	var exisisting RunModel
 	for i, p := range r.Runs {
 
-		if p.Id == project.Id {
+		if p.Id == run.Id {
 			foundIndex = i
 			exisisting = p
 			break
@@ -115,16 +146,12 @@ func (r *RunRepository) Update(project RunModel) (RunModel, error) {
 	}
 
 	if foundIndex == -1 {
-		return RunModel{}, fmt.Errorf("project con id %s non trovato", project.Id)
+		return RunModel{}, fmt.Errorf("run con id %s non trovato", run.Id)
 	}
 
-	exisisting.Command = project.Command
-	exisisting.Status = project.Status
-	exisisting.EndTime = project.EndTime
-	exisisting.StartTime = project.StartTime
-	exisisting.LogPath = project.LogPath
-	exisisting.Type = project.Type
-	exisisting.ProjectId = project.ProjectId
+	exisisting.Status = run.Status
+	exisisting.EndTime = run.EndTime
+	exisisting.LogPath = run.LogPath
 	r.Runs[foundIndex] = exisisting
 	err := r.saveToDisk()
 	if err != nil {
@@ -139,7 +166,7 @@ func (r *RunRepository) Delete(id string) error {
 	r.Mu.Lock()
 	defer r.Mu.Unlock()
 	if id == "" {
-		return fmt.Errorf("id project necessario per la cancellazione")
+		return fmt.Errorf("id run necessario per la cancellazione")
 	}
 	foundIndex := -1
 	for i, p := range r.Runs {
@@ -150,7 +177,7 @@ func (r *RunRepository) Delete(id string) error {
 	}
 
 	if foundIndex == -1 {
-		return fmt.Errorf("project con id %s non trovato", id)
+		return fmt.Errorf("run con id %s non trovato", id)
 	}
 	r.Runs = append(r.Runs[:foundIndex], r.Runs[foundIndex+1:]...)
 
