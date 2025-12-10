@@ -235,5 +235,3 @@ func writeDomainError(w http.ResponseWriter, err projects.DomainError) {
 	writeJson(w, statusHttp, body)
 
 }
-
-//cuiaooooooo
