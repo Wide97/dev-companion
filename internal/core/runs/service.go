@@ -11,7 +11,7 @@ type DomainError struct {
 }
 
 type Service struct {
-	Repo RunRepository
+	Repo *RunRepository
 }
 
 const ERROR_VALIDATION = "VALIDATION"
@@ -68,6 +68,11 @@ func (s *Service) ListRuns(filter RunFilter) ([]RunModel, error) {
 	return filteredRuns, nil
 }
 
+func GetRun(id string) (RunModel, error) {
+	
+
+}
+
 func NewValidationError(details map[string]string) DomainError {
 	return DomainError{
 		Code:    ERROR_VALIDATION,
@@ -91,7 +96,7 @@ func NewInternalError(message string) DomainError {
 	}
 }
 
-func NewService(r RunRepository) Service {
+func NewService(r *RunRepository) Service {
 	return Service{
 		Repo: r,
 	}
