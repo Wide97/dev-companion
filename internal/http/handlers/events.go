@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"dev-companion/internal/core/events"
-	"dev-companion/internal/core/runs"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -20,58 +19,58 @@ func NewEventsHandler(svc events.Service) *EventsHandler {
 	return &newRunHan
 }
 
-func (h *RunsHandler) RegisterRunsRoutes(router *mux.Router) {
+func (h *EventsHandler) RegisterEventsRoutes(router *mux.Router) {
 
-	router.HandleFunc("/runs", func(w http.ResponseWriter, r *http.Request) {
-		h.ListRuns(w, r)
+	router.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {
+		h.ListEvents(w, r)
 	}).Methods("GET")
 
-	router.HandleFunc("/runs/{id}", func(w http.ResponseWriter, r *http.Request) {
-		h.GetRun(w, r)
+	router.HandleFunc("/events/{id}", func(w http.ResponseWriter, r *http.Request) {
+		h.GetEvent(w, r)
 	}).Methods("GET")
 
 }
 
-func (h *RunsHandler) ListRuns(w http.ResponseWriter, r *http.Request) {
-	res, err := h.service.ListRuns(runs.RunFilter{})
+func (h *EventsHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
+	res, err := h.service.ListEvents(events.EventFilter{})
 	if err != nil {
-		if domainErr, ok := err.(runs.DomainError); ok {
-			writeDomainRunError(w, domainErr)
+		if domainErr, ok := err.(events.DomainError); ok {
+			writeDomainEventError(w, domainErr)
 			return
 		}
 
-		internalErr := runs.NewInternalError(
-			"errore interno durante ListRuns: " + err.Error(),
+		internalErr := events.NewInternalError(
+			"errore interno durante ListEvents: " + err.Error(),
 		)
-		writeDomainRunError(w, internalErr)
+		writeDomainEventError(w, internalErr)
 		return
 	}
 
 	writeJson(w, http.StatusOK, res)
 }
 
-func (h *RunsHandler) GetRun(w http.ResponseWriter, r *http.Request) {
+func (h *EventsHandler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	project, err := h.service.GetRun(id)
+	event, err := h.service.GetEvent(id)
 	if err != nil {
-		if domainErr, ok := err.(runs.DomainError); ok {
-			writeDomainRunError(w, domainErr)
+		if domainErr, ok := err.(events.DomainError); ok {
+			writeDomainEventError(w, domainErr)
 			return
 		}
 
-		internalErr := runs.NewInternalError(
-			"errore interno durante GetRun: " + err.Error(),
+		internalErr := events.NewInternalError(
+			"errore interno durante GetEvent: " + err.Error(),
 		)
-		writeDomainRunError(w, internalErr)
+		writeDomainEventError(w, internalErr)
 		return
 
 	}
-	writeJson(w, 200, project)
+	writeJson(w, 200, event)
 
 }
 
-func writeDomainEventError(w http.ResponseWriter, err runs.DomainError) {
+func writeDomainEventError(w http.ResponseWriter, err events.DomainError) {
 	code := err.Code
 
 	statusHttp := 500
