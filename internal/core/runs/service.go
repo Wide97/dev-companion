@@ -1,6 +1,7 @@
 package runs
 
 import (
+	"strings"
 	"time"
 )
 
@@ -68,8 +69,19 @@ func (s *Service) ListRuns(filter RunFilter) ([]RunModel, error) {
 	return filteredRuns, nil
 }
 
-func GetRun(id string) (RunModel, error) {
-	
+func (s *Service) GetRun(id string) (RunModel, error) {
+	if id == "" {
+		return RunModel{}, NewValidationError(map[string]string{"id": "id della run è obbligatorio"})
+	}
+	rm, err := s.Repo.GetById(id)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return RunModel{}, NewNotFoundError(id)
+		}
+		return RunModel{}, NewInternalError("errore interno nel recupero della run: " + err.Error())
+	}
+
+	return rm, nil
 
 }
 
