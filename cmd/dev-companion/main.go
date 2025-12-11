@@ -2,7 +2,9 @@ package main
 
 import (
 	"dev-companion/internal/config"
+	"dev-companion/internal/core/events"
 	"dev-companion/internal/core/projects"
+	"dev-companion/internal/core/runs"
 	"dev-companion/internal/http/handlers"
 	"dev-companion/internal/http/middleware"
 	"fmt"
@@ -14,7 +16,7 @@ import (
 )
 
 func main() {
-	var path = "config/config.json"
+	var path = "internal/config/config.json"
 
 	val, err := config.LoadConfig(path)
 	if err != nil {
@@ -28,9 +30,29 @@ func main() {
 		os.Exit(1)
 	}
 
+	dir1, err2 := runs.NewRunRepository(val.DataDir)
+	if err2 != nil {
+		fmt.Println("Errore durante il caricamento della configurazione: ", err2)
+		os.Exit(1)
+	}
+
+	dir2, err3 := events.NewEventsRepository(val.DataDir)
+	if err3 != nil {
+		fmt.Println("Errore durante il caricamento della configurazione: ", err3)
+		os.Exit(1)
+	}
+
 	pjService := projects.CreatePjService(dir)
 
 	pjHandler := handlers.NewProjectHandler(pjService)
+
+	runsService := runs.CreateRunSerivce(dir1)
+
+	runsHandler := handlers.NewRunsHandler(runsService)
+
+	eventsService := events.CreateEventsService(dir2)
+
+	eventsHandler := handlers.NewEventsHandler(eventsService)
 
 	router := mux.NewRouter()
 
@@ -45,13 +67,19 @@ func main() {
 
 	pjHandler.RegisterRoutes(router)
 
+	runsHandler.RegisterRunsRoutes(router)
+
+	eventsHandler.RegisterEventsRoutes(router)
+
 	str := val.ListenAddress + ":" + strconv.Itoa(val.Port)
 	fmt.Println("Server Dev Companion in ascolto su: " + str)
 
-	err2 := http.ListenAndServe(str, router)
-	if err2 != nil {
+	err4 := http.ListenAndServe(str, router)
+	if err4 != nil {
 		fmt.Println("Errore durante l'avvio del server: ", err2)
 		os.Exit(-1)
 	}
 
 }
+
+//Comando per lanciare: go run ./cmd/dev-companion

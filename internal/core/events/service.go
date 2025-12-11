@@ -113,7 +113,7 @@ func NewInternalError(message string) DomainError {
 	}
 }
 
-func NewService(e *EventRepository) Service {
+func CreateEventsService(e *EventRepository) Service {
 	return Service{
 		Repo: e,
 	}

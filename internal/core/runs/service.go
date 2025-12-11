@@ -108,7 +108,7 @@ func NewInternalError(message string) DomainError {
 	}
 }
 
-func NewService(r *RunRepository) Service {
+func CreateRunSerivce(r *RunRepository) Service {
 	return Service{
 		Repo: r,
 	}
