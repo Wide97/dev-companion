@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"dev-companion/internal/core/runs"
+	"dev-companion/internal/utility"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -32,7 +33,40 @@ func (h *RunsHandler) RegisterRunsRoutes(router *mux.Router) {
 }
 
 func (h *RunsHandler) ListRuns(w http.ResponseWriter, r *http.Request) {
-	res, err := h.service.ListRuns(runs.RunFilter{})
+	query := r.URL.Query()
+	projectIdStr := query.Get("projectId")
+	typeStr := query.Get("type")
+	statusStr := query.Get("status")
+	fromStr := query.Get("from")
+	toStr := query.Get("to")
+
+	convFromStr, err := utility.Parser(fromStr)
+	if err != nil {
+		ev := runs.NewValidationError(map[string]string{
+			"from": "formato data non valido, usa RFC3339",
+		})
+		writeDomainRunError(w, ev)
+		return
+	}
+
+	convToStr, err1 := utility.Parser(toStr)
+	if err1 != nil {
+		ev1 := runs.NewValidationError(map[string]string{
+			"from": "formato data non valido, usa RFC3339",
+		})
+		writeDomainRunError(w, ev1)
+		return
+	}
+
+	filt := runs.RunFilter{
+		ProjectId: projectIdStr,
+		Type:      typeStr,
+		Status:    statusStr,
+		From:      convFromStr,
+		To:        convToStr,
+	}
+
+	res, err := h.service.ListRuns(filt)
 	if err != nil {
 		if domainErr, ok := err.(runs.DomainError); ok {
 			writeDomainRunError(w, domainErr)
