@@ -52,7 +52,7 @@ func (h *RunsHandler) ListRuns(w http.ResponseWriter, r *http.Request) {
 	convToStr, err1 := utility.Parser(toStr)
 	if err1 != nil {
 		ev1 := runs.NewValidationError(map[string]string{
-			"from": "formato data non valido, usa RFC3339",
+			"to": "formato data non valido, usa RFC3339",
 		})
 		writeDomainRunError(w, ev1)
 		return
